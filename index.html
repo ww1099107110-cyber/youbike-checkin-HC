@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🚲 YouBike 作業打卡</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { background: #f0f2f5; font-family: sans-serif; text-align: center; padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        .btn { display: block; width: 100%; height: 90px; margin: 15px 0; font-size: 28px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; transition: 0.2s; }
+        .btn-in { background: #28a745; }
+        .btn-out { background: #dc3545; }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        #info { background: #fff9e6; padding: 15px; margin-bottom: 20px; border-radius: 12px; font-size: 20px; border-left: 5px solid #ffc107; text-align: left; }
+        #loader { color: #666; margin-bottom: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 style="margin-bottom:20px;">🚲 作業打卡系統</h2>
+        <div id="loader">🔄 正在連線 LINE...</div>
+        <div id="info" style="display:none;">讀取中...</div>
+        
+        <button class="btn btn-in" onclick="send('到站')">到站打卡</button>
+        <button class="btn btn-out" onclick="send('離站')">離站打卡</button>
+        
+        <p style="font-size: 12px; color: #999; margin-top: 20px;">請確保開啟 GPS 定位功能</p>
+    </div>
+
+    <script>
+    let finalName = "未辨識";
+    let finalId = "LINE_USER";
+
+    // 取得按鈕元件
+    const btnIn = document.querySelector('.btn-in');
+    const btnOut = document.querySelector('.btn-out');
+
+    // 初始先禁用按鈕，避免名字還沒抓到就打卡
+    btnIn.disabled = true;
+    btnOut.disabled = true;
+    btnIn.style.opacity = "0.5";
+    btnOut.style.opacity = "0.5";
+
+    async function initLiff() {
+        try {
+            await liff.init({ liffId: "2009683528-5xXseyWs" });
+
+            if (!liff.isLoggedIn()) {
+                liff.login();
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const nameParam = urlParams.get('name');
+            const idParam = urlParams.get('id');
+
+            if (nameParam) {
+                finalName = nameParam;
+                finalId = idParam || "N/A";
+            } else {
+                const profile = await liff.getProfile();
+                finalName = profile.displayName;
+                finalId = "LINE_" + profile.userId.substring(0, 5);
+            }
+
+            // 抓到名字後，更新介面並解鎖按鈕
+            document.getElementById('info').innerText = "執行人員：" + finalName + " (" + finalId + ")";
+            document.getElementById('info').style.display = 'block';
+            document.getElementById('loader').style.display = 'none';
+            
+            // 解鎖按鈕
+            btnIn.disabled = false;
+            btnOut.disabled = false;
+            btnIn.style.opacity = "1";
+            btnOut.style.opacity = "1";
+
+        } catch (err) {
+            console.error("LIFF 初始化失敗", err);
+            document.getElementById('loader').innerHTML = 
+                `<span style="color:red">無法辨識身分</span><br>
+                 <button onclick="liff.login()" style="padding:5px 10px; margin-top:5px;">點此重新登入</button>`;
+        }
+    }
+
+    initLiff();
+
+    function send(status) {
+        if (finalName === "未辨識") {
+            alert("錯誤：尚未辨識身分，請重新整理頁面。");
+            return;
+        }
+        
+        // ...原本的 send 內容保持不變...
+        // 記得檢查您的 GAS_URL 是否正確
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('loader').innerText = "⌛ 正在取得定位並傳送...";
+        
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            const GAS_URL = 'https://script.google.com/macros/s/AKfycbymkeN0xn4ZJvs2rYJ7wEwfvAxYxuHJQOmouCM568eF6htER9DFoKb8U1RdO3tebvwpkg/exec'; 
+            fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({
+                    name: finalName, id: finalId, status: status,
+                    lat: pos.coords.latitude, lng: pos.coords.longitude
+                })
+            }).then(() => {
+                alert("✅ " + finalName + " " + status + " 成功！");
+                location.reload(); 
+            }).catch(() => {
+                alert("❌ 傳送失敗");
+                location.reload();
+            });
+        }, function(err) {
+            alert("❌ 請開啟 GPS 定位授權");
+            location.reload();
+        }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+</script>
+</body>
+</html>
