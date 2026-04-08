@@ -97,7 +97,7 @@
         document.getElementById('loader').innerText = "⌛ 正在取得定位並傳送...";
         
         navigator.geolocation.getCurrentPosition(function(pos) {
-            const GAS_URL = 'https://script.google.com/macros/s/AKfycbymkeN0xn4ZJvs2rYJ7wEwfvAxYxuHJQOmouCM568eF6htER9DFoKb8U1RdO3tebvwpkg/exec'; 
+            const GAS_URL = 'https://script.google.com/macros/s/AKfycbwWXnjwHv4I50SV86YTlRJPr-OPsXcO1UvsN3QCn5q5d2hJbcM3ygDYSGMsV1_qYJu8/exec'; 
             fetch(GAS_URL, {
                 method: 'POST',
                 mode: 'no-cors',
