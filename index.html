@@ -3,54 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🚲 YouBike 作業打卡</title>
+    <title>🚲 YouBike 作業打卡系統</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { background: #f0f2f5; font-family: sans-serif; text-align: center; padding: 20px; }
+        body { background: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center; padding: 20px; }
         .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        .btn { display: block; width: 100%; height: 90px; margin: 15px 0; font-size: 28px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; transition: 0.2s; }
+        
+        #info { background: #fff9e6; padding: 15px; margin-bottom: 20px; border-radius: 12px; font-size: 18px; border-left: 5px solid #ffc107; text-align: left; line-height: 1.5; }
+        #loader { color: #666; margin-bottom: 15px; font-weight: bold; font-size: 16px; }
+
+        /* 輸入區域樣式 */
+        .input-group { text-align: left; margin-bottom: 20px; }
+        .input-group label { display: block; font-weight: bold; color: #333; margin-bottom: 8px; font-size: 16px; }
+        .input-group input { 
+            width: 100%; height: 55px; font-size: 22px; text-align: center; 
+            border-radius: 12px; border: 2px solid #ddd; box-sizing: border-box; 
+            outline: none; transition: border-color 0.3s;
+        }
+        .input-group input:focus { border-color: #007bff; }
+
+        /* 按鈕樣式 */
+        .btn { display: block; width: 100%; height: 80px; margin: 12px 0; font-size: 24px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; transition: 0.2s; }
         .btn-in { background: #28a745; }
         .btn-out { background: #dc3545; }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
-        #info { background: #fff9e6; padding: 15px; margin-bottom: 20px; border-radius: 12px; font-size: 20px; border-left: 5px solid #ffc107; text-align: left; }
-        #loader { color: #666; margin-bottom: 10px; font-weight: bold; }
+        .btn:active { transform: scale(0.96); opacity: 0.9; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        .hint { font-size: 12px; color: #999; margin-top: 20px; }
     </style>
 </head>
 <body>
+
     <div class="card">
-        <h2 style="margin-bottom:20px;">🚲 作業打卡系統</h2>
-        <div id="loader">🔄 正在連線 LINE...</div>
+        <h2 style="margin-bottom:10px;">🚲 作業打卡</h2>
+        
+        <div id="loader">🔄 正在載入 LINE 身分...</div>
         <div id="info" style="display:none;">讀取中...</div>
+
+        <div class="input-group">
+            <label>換電數量 / 備註：</label>
+            <input type="text" id="userNote" placeholder="例如：24 或 異常回報">
+        </div>
+
+        <button class="btn btn-in" id="btnIn" onclick="send('到站')" disabled style="opacity:0.5;">到站打卡</button>
+        <button class="btn btn-out" id="btnOut" onclick="send('離站')" disabled style="opacity:0.5;">離站打卡</button>
         
-        <button class="btn btn-in" onclick="send('到站')">到站打卡</button>
-        <button class="btn btn-out" onclick="send('離站')">離站打卡</button>
-        
-        <p style="font-size: 12px; color: #999; margin-top: 20px;">請確保開啟 GPS 定位功能</p>
+        <p class="hint">請確保手機已開啟 GPS 定位功能</p>
     </div>
 
     <script>
+    // --- 設定區 ---
+    const LIFF_ID = "2009736137-c8JGtpLd"; // 您的 LIFF ID
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbwWXnjwHv4I50SV86YTlRJPr-OPsXcO1UvsN3QCn5q5d2hJbcM3ygDYSGMsV1_qYJu8/exec"; // 您的 GAS 網址
+
     let finalName = "未辨識";
     let finalId = "LINE_USER";
 
-    // 取得按鈕元件
-    const btnIn = document.querySelector('.btn-in');
-    const btnOut = document.querySelector('.btn-out');
+    const btnIn = document.getElementById('btnIn');
+    const btnOut = document.getElementById('btnOut');
+    const infoBox = document.getElementById('info');
+    const loader = document.getElementById('loader');
 
-    // 初始先禁用按鈕，避免名字還沒抓到就打卡
-    btnIn.disabled = true;
-    btnOut.disabled = true;
-    btnIn.style.opacity = "0.5";
-    btnOut.style.opacity = "0.5";
-
+    // 初始化 LIFF
     async function initLiff() {
         try {
-            await liff.init({ liffId: "2009736137-c8JGtpLd" });
+            await liff.init({ liffId: LIFF_ID });
 
             if (!liff.isLoggedIn()) {
                 liff.login();
                 return;
             }
 
+            // 優先嘗試從 URL 抓取姓名 (如果您有從官方帳號傳參數)
             const urlParams = new URLSearchParams(window.location.search);
             const nameParam = urlParams.get('name');
             const idParam = urlParams.get('id');
@@ -64,10 +88,10 @@
                 finalId = "LINE_" + profile.userId.substring(0, 5);
             }
 
-            // 抓到名字後，更新介面並解鎖按鈕
-            document.getElementById('info').innerText = "執行人員：" + finalName + " (" + finalId + ")";
-            document.getElementById('info').style.display = 'block';
-            document.getElementById('loader').style.display = 'none';
+            // 更新介面
+            infoBox.innerHTML = `<strong>執行人員：</strong>${finalName}<br><strong>識別碼：</strong>${finalId}`;
+            infoBox.style.display = 'block';
+            loader.style.display = 'none';
             
             // 解鎖按鈕
             btnIn.disabled = false;
@@ -76,47 +100,50 @@
             btnOut.style.opacity = "1";
 
         } catch (err) {
-            console.error("LIFF 初始化失敗", err);
-            document.getElementById('loader').innerHTML = 
-                `<span style="color:red">無法辨識身分</span><br>
-                 <button onclick="liff.login()" style="padding:5px 10px; margin-top:5px;">點此重新登入</button>`;
+            console.error(err);
+            loader.innerHTML = `<span style="color:red">身份驗證失敗</span><br><button onclick="location.reload()">重新嘗試</button>`;
         }
     }
 
     initLiff();
 
+    // 發送資料
     function send(status) {
-        if (finalName === "未辨識") {
-            alert("錯誤：尚未辨識身分，請重新整理頁面。");
-            return;
-        }
-        
-        // ...原本的 send 內容保持不變...
-        // 記得檢查您的 GAS_URL 是否正確
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('loader').innerText = "⌛ 正在取得定位並傳送...";
-        
+        const noteValue = document.getElementById('userNote').value;
+
+        // 顯示傳送中狀態
+        loader.style.display = 'block';
+        loader.innerText = "⌛ 正在取得 GPS 定位並傳送...";
+        btnIn.disabled = true;
+        btnOut.disabled = true;
+
         navigator.geolocation.getCurrentPosition(function(pos) {
-            const GAS_URL = 'https://script.google.com/macros/s/AKfycbwWXnjwHv4I50SV86YTlRJPr-OPsXcO1UvsN3QCn5q5d2hJbcM3ygDYSGMsV1_qYJu8/exec'; 
             fetch(GAS_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 body: JSON.stringify({
-                    name: finalName, id: finalId, status: status,
-                    lat: pos.coords.latitude, lng: pos.coords.longitude
+                    name: finalName,
+                    id: finalId,
+                    status: status,
+                    note: noteValue, // 傳送輸入框內容
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude
                 })
             }).then(() => {
-                alert("✅ " + finalName + " " + status + " 成功！");
+                alert(`✅ ${status}成功！\n備註：${noteValue || "無"}`);
                 location.reload(); 
-            }).catch(() => {
-                alert("❌ 傳送失敗");
+            }).catch((err) => {
+                alert("❌ 傳送失敗，請檢查網路連線");
+                console.error(err);
                 location.reload();
             });
         }, function(err) {
-            alert("❌ 請開啟 GPS 定位授權");
+            let msg = "❌ GPS 定位失敗";
+            if(err.code === 1) msg = "❌ 請允許 LINE 存取您的位置權限";
+            alert(msg);
             location.reload();
         }, { enableHighAccuracy: true, timeout: 10000 });
     }
-</script>
+    </script>
 </body>
 </html>
