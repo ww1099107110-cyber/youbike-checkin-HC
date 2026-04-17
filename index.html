@@ -3,31 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🚲 YouBike 作業系統 V3</title>
+    <title>🚲 YouBike 作業系統 V4</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body { background: #f0f2f5; font-family: sans-serif; text-align: center; padding: 10px; margin: 0; }
         .card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
-        
         #info { background: #e8f4fd; padding: 10px; margin-bottom: 15px; border-radius: 12px; font-size: 13px; border-left: 5px solid #2196f3; text-align: left; }
         #loader { font-weight: bold; color: #007bff; margin: 10px 0; display: none; }
 
-        /* 網格系統：一排三個 */
         .grid-container {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
         }
         .form-item {
-            width: 31%; /* 寬度佔約三分之一 */
-            margin-bottom: 10px;
+            width: 31%; 
+            margin-bottom: 12px;
             text-align: center;
         }
         .form-item label {
             display: block;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             color: #555;
             margin-bottom: 5px;
             white-space: nowrap;
@@ -42,13 +40,11 @@
             box-sizing: border-box;
             background: #fafafa;
         }
-        
-        /* 針對「其他」輸入框如果是文字輸入，可以微調 */
+        /* 備註欄位字體縮小 */
         #otherNote { font-size: 14px; }
 
-        /* 大按鈕樣式 */
-        .btn-container { margin-top: 10px; }
-        .btn { display: block; width: 100%; height: 75px; margin: 12px 0; font-size: 24px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; transition: 0.2s; }
+        .btn-container { margin-top: 5px; }
+        .btn { display: block; width: 100%; height: 70px; margin: 10px 0; font-size: 22px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; transition: 0.2s; }
         .btn-in { background: #28a745; box-shadow: 0 4px #1e7e34; }
         .btn-out { background: #dc3545; box-shadow: 0 4px #bd2130; }
         .btn:active { transform: translateY(2px); box-shadow: 0 2px #1e7e34; }
@@ -57,38 +53,26 @@
 </head>
 <body>
     <div class="card">
-        <h3 style="margin-top:0;">🚲 YouBike 巡檢打卡</h3>
+        <h3 style="margin-top:0;">🚲 YouBike 巡檢作業</h3>
         <div id="info">正在讀取 LINE 身分...</div>
-        <div id="loader">⌛ 處理中，請稍候...</div>
+        <div id="loader">⌛ 處理中...</div>
 
         <div class="grid-container">
-            <div class="form-item">
-                <label>換電數量</label>
-                <input type="number" id="batteryCount" placeholder="0" value="0">
-            </div>
-            <div class="form-item">
-                <label>綁車數量</label>
-                <input type="number" id="bindCount" placeholder="0" value="0">
-            </div>
-            <div class="form-item">
-                <label>解車數量</label>
-                <input type="number" id="unbindCount" placeholder="0" value="0">
-            </div>
+            <div class="form-item"><label>換電數量</label><input type="number" id="batteryCount" placeholder="0"></div>
+            <div class="form-item"><label>綁車數量</label><input type="number" id="bindCount" placeholder="0"></div>
+            <div class="form-item"><label>解車數量</label><input type="number" id="unbindCount" placeholder="0"></div>
         </div>
 
         <div class="grid-container">
-            <div class="form-item">
-                <label>一級數量</label>
-                <input type="number" id="level1Count" placeholder="0" value="0">
-            </div>
-            <div class="form-item">
-                <label>二級數量</label>
-                <input type="number" id="level2Count" placeholder="0" value="0">
-            </div>
-            <div class="form-item">
-                <label>其他數量</label>
-                <input type="text" id="otherNote" placeholder="備註">
-            </div>
+            <div class="form-item"><label>一級數量</label><input type="number" id="level1Count" placeholder="0"></div>
+            <div class="form-item"><label>二級數量</label><input type="number" id="level2Count" placeholder="0"></div>
+            <div class="form-item"><label>場站清潔</label><input type="number" id="cleanCount" placeholder="0"></div>
+        </div>
+
+        <div class="grid-container">
+            <div class="form-item"><label>注油數量</label><input type="number" id="oilCount" placeholder="0"></div>
+            <div class="form-item"><label>車柱貼更換</label><input type="number" id="stickerCount" placeholder="0"></div>
+            <div class="form-item"><label>其他備註</label><input type="text" id="otherNote" placeholder="填寫"></div>
         </div>
 
         <div class="btn-container">
@@ -131,6 +115,9 @@
             unbind: document.getElementById('unbindCount').value,
             level1: document.getElementById('level1Count').value,
             level2: document.getElementById('level2Count').value,
+            clean: document.getElementById('cleanCount').value,
+            oil: document.getElementById('oilCount').value,
+            sticker: document.getElementById('stickerCount').value,
             other: document.getElementById('otherNote').value
         };
 
@@ -139,12 +126,8 @@
                 method: 'POST',
                 mode: 'no-cors',
                 body: JSON.stringify({
-                    name: finalName,
-                    id: finalId,
-                    status: status,
-                    counts: data,
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude
+                    name: finalName, id: finalId, status: status, counts: data,
+                    lat: pos.coords.latitude, lng: pos.coords.longitude
                 })
             }).then(() => {
                 alert(`✅ ${status}成功！`);
