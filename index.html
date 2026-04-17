@@ -3,40 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🚲 YouBike 強化版作業系統</title>
+    <title>🚲 YouBike 作業系統 V3</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { background: #f0f2f5; font-family: sans-serif; text-align: center; padding: 15px; }
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        #info { background: #e8f4fd; padding: 10px; margin-bottom: 15px; border-radius: 12px; font-size: 14px; border-left: 5px solid #2196f3; text-align: left; }
-        .input-area { text-align: left; margin-bottom: 15px; background: #fafafa; padding: 10px; border-radius: 10px; }
-        .form-item { margin-bottom: 8px; }
-        .form-item label { font-weight: bold; display: block; font-size: 13px; color: #555; margin-bottom: 3px; }
-        .form-item input { width: 100%; height: 38px; font-size: 18px; text-align: center; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        #otherNote { text-align: left; padding: 0 10px; font-size: 14px; }
-        .btn { display: block; width: 100%; height: 65px; margin: 10px 0; font-size: 20px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; }
-        .btn-in { background: #28a745; }
-        .btn-out { background: #dc3545; }
-        .btn:disabled { background: #ccc; opacity: 0.6; }
+        body { background: #f0f2f5; font-family: sans-serif; text-align: center; padding: 10px; margin: 0; }
+        .card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
+        
+        #info { background: #e8f4fd; padding: 10px; margin-bottom: 15px; border-radius: 12px; font-size: 13px; border-left: 5px solid #2196f3; text-align: left; }
         #loader { font-weight: bold; color: #007bff; margin: 10px 0; display: none; }
+
+        /* 網格系統：一排三個 */
+        .grid-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .form-item {
+            width: 31%; /* 寬度佔約三分之一 */
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .form-item label {
+            display: block;
+            font-weight: bold;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 5px;
+            white-space: nowrap;
+        }
+        .form-item input {
+            width: 100%;
+            height: 45px;
+            font-size: 18px;
+            text-align: center;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            background: #fafafa;
+        }
+        
+        /* 針對「其他」輸入框如果是文字輸入，可以微調 */
+        #otherNote { font-size: 14px; }
+
+        /* 大按鈕樣式 */
+        .btn-container { margin-top: 10px; }
+        .btn { display: block; width: 100%; height: 75px; margin: 12px 0; font-size: 24px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; transition: 0.2s; }
+        .btn-in { background: #28a745; box-shadow: 0 4px #1e7e34; }
+        .btn-out { background: #dc3545; box-shadow: 0 4px #bd2130; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px #1e7e34; }
+        .btn:disabled { background: #ccc; box-shadow: none; opacity: 0.6; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h3>🚲 YouBike 作業系統 V2</h3>
-        <div id="info">正在讀取身分...</div>
+        <h3 style="margin-top:0;">🚲 YouBike 巡檢打卡</h3>
+        <div id="info">正在讀取 LINE 身分...</div>
         <div id="loader">⌛ 處理中，請稍候...</div>
 
-        <div class="input-area">
-            <div class="form-item"><label>1. 換電數量：</label><input type="number" id="batteryCount" value="0"></div>
-            <div class="form-item"><label>2. 綁車數量：</label><input type="number" id="bindCount" value="0"></div>
-            <div class="form-item"><label>3. 解車數量：</label><input type="number" id="unbindCount" value="0"></div>
-            <div class="form-item"><label>4. 一級數量：</label><input type="number" id="level1Count" value="0"></div>
-            <div class="form-item"><label>5. 其他作業 (內容+數量)：</label><input type="text" id="otherNote" placeholder="例：補胎 2"></div>
+        <div class="grid-container">
+            <div class="form-item">
+                <label>換電數量</label>
+                <input type="number" id="batteryCount" placeholder="0" value="0">
+            </div>
+            <div class="form-item">
+                <label>綁車數量</label>
+                <input type="number" id="bindCount" placeholder="0" value="0">
+            </div>
+            <div class="form-item">
+                <label>解車數量</label>
+                <input type="number" id="unbindCount" placeholder="0" value="0">
+            </div>
         </div>
 
-        <button class="btn btn-in" id="btnIn" onclick="send('到站')" disabled>到站打卡</button>
-        <button class="btn btn-out" id="btnOut" onclick="send('離站')" disabled>離站打卡</button>
+        <div class="grid-container">
+            <div class="form-item">
+                <label>一級數量</label>
+                <input type="number" id="level1Count" placeholder="0" value="0">
+            </div>
+            <div class="form-item">
+                <label>二級數量</label>
+                <input type="number" id="level2Count" placeholder="0" value="0">
+            </div>
+            <div class="form-item">
+                <label>其他數量</label>
+                <input type="text" id="otherNote" placeholder="備註">
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn btn-in" id="btnIn" onclick="send('到站')" disabled>到站打卡</button>
+            <button class="btn btn-out" id="btnOut" onclick="send('離站')" disabled>離站打卡</button>
+        </div>
     </div>
 
     <script>
@@ -53,7 +111,7 @@
             const profile = await liff.getProfile();
             finalName = profile.displayName;
             finalId = "LINE_" + profile.userId.substring(0, 5);
-            document.getElementById('info').innerHTML = `人員：${finalName}<br>識別：${finalId}`;
+            document.getElementById('info').innerHTML = `人員：${finalName} | ID：${finalId}`;
             document.getElementById('btnIn').disabled = false;
             document.getElementById('btnOut').disabled = false;
         } catch (err) {
@@ -72,6 +130,7 @@
             bind: document.getElementById('bindCount').value,
             unbind: document.getElementById('unbindCount').value,
             level1: document.getElementById('level1Count').value,
+            level2: document.getElementById('level2Count').value,
             other: document.getElementById('otherNote').value
         };
 
