@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🚲 YouBike 作業系統 V4</title>
+    <title>🚲 YouBike 作業系統 </title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body { background: #f0f2f5; font-family: sans-serif; text-align: center; padding: 10px; margin: 0; }
@@ -40,15 +40,44 @@
             box-sizing: border-box;
             background: #fafafa;
         }
-        /* 備註欄位字體縮小 */
-        #otherNote { font-size: 14px; }
 
         .btn-container { margin-top: 5px; }
-        .btn { display: block; width: 100%; height: 70px; margin: 10px 0; font-size: 22px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; transition: 0.2s; }
+        .btn { display: block; width: 100%; height: 65px; margin: 10px 0; font-size: 22px; font-weight: bold; color: white; border: none; border-radius: 15px; cursor: pointer; transition: 0.2s; }
         .btn-in { background: #28a745; box-shadow: 0 4px #1e7e34; }
         .btn-out { background: #dc3545; box-shadow: 0 4px #bd2130; }
         .btn:active { transform: translateY(2px); box-shadow: 0 2px #1e7e34; }
         .btn:disabled { background: #ccc; box-shadow: none; opacity: 0.6; }
+
+        /* 新增：操作說明框樣式 */
+        .instruction-box {
+            background: #fff9db;
+            border: 1px dashed #fcc419;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+            color: #444;
+            line-height: 1.6;
+        }
+        .ins-title {
+            font-weight: bold;
+            color: #e67e22;
+            display: block;
+            margin-bottom: 5px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .ins-step {
+            display: flex;
+            margin-bottom: 3px;
+        }
+        .ins-label {
+            font-weight: bold;
+            min-width: 45px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -78,6 +107,18 @@
         <div class="btn-container">
             <button class="btn btn-in" id="btnIn" onclick="send('到站')" disabled>到站打卡</button>
             <button class="btn btn-out" id="btnOut" onclick="send('離站')" disabled>離站打卡</button>
+        </div>
+
+        <div class="instruction-box">
+            <span class="ins-title">💡 操作流程說明</span>
+            <div class="ins-step">
+                <span class="ins-label">到站：</span>
+                <span>直接按「到站打卡」，不用填數量。</span>
+            </div>
+            <div class="ins-step">
+                <span class="ins-label">離站：</span>
+                <span>離站時填入施作完成數量，再按「離站打卡」。</span>
+            </div>
         </div>
     </div>
 
